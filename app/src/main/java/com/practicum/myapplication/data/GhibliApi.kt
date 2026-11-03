@@ -1,5 +1,6 @@
 package com.practicum.myapplication.data
 
+import com.practicum.myapplication.domain.model.Film
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path

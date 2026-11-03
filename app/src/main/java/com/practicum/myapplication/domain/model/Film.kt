@@ -1,4 +1,4 @@
-package com.practicum.myapplication.data
+package com.practicum.myapplication.domain.model
 
 import com.google.gson.annotations.SerializedName
 

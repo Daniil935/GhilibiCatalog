@@ -23,12 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.practicum.myapplication.viewmodel.FilmViewModel
+import com.practicum.myapplication.viewmodel.FavoritesViewModel
 
 @Composable
 fun FavoritesScreen(
     onFilmClick: (String) -> Unit,
-    viewModel: FilmViewModel = viewModel()
+    viewModel: FavoritesViewModel = viewModel()
 ) {
     val favoriteIds by viewModel.favoriteIds.collectAsState()
     val films by viewModel.films.collectAsState()
@@ -127,7 +127,7 @@ fun FavoritesScreen(
                                 fontWeight = FontWeight.Bold
                             )
 
-                            Text(text = "Год выпуска: ${film.releaseDate}")
+                            Text(text = viewModel.getReleaseDateText(film))
                         }
                     }
                 }

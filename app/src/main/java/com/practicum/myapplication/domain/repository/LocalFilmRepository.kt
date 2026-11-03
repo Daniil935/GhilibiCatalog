@@ -1,4 +1,6 @@
-package com.practicum.myapplication.data
+package com.practicum.myapplication.domain.repository
+
+import com.practicum.myapplication.domain.model.Film
 
 object LocalFilmRepository {
 

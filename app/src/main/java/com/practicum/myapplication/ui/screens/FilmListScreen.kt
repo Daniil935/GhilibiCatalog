@@ -30,13 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.practicum.myapplication.data.Film
-import com.practicum.myapplication.viewmodel.FilmViewModel
+import com.practicum.myapplication.domain.model.Film
+import com.practicum.myapplication.viewmodel.FilmListViewModel
 
 @Composable
 fun FilmListScreen(
     onFilmClick: (String) -> Unit,
-    viewModel: FilmViewModel = viewModel()
+    viewModel: FilmListViewModel = viewModel()
 ) {
     val films by viewModel.films.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -138,6 +138,8 @@ fun FilmListScreen(
                     ) { film ->
                         FilmCard(
                             film = film,
+                            directorText = viewModel.getDirectorText(film),
+                            ratingText = viewModel.getRatingAndRunningTimeText(film),
                             onClick = { onFilmClick(film.id) }
                         )
                     }
@@ -150,6 +152,8 @@ fun FilmListScreen(
 @Composable
 private fun FilmCard(
     film: Film,
+    directorText: String,
+    ratingText: String,
     onClick: () -> Unit
 ) {
     Card(
@@ -210,7 +214,7 @@ private fun FilmCard(
                 Spacer(Modifier.height(4.dp))
 
                 Text(
-                    text = "Режиссёр: ${film.director}",
+                    text = directorText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -227,7 +231,7 @@ private fun FilmCard(
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text = "★ ${film.rating}%  •  ${film.runningTime} мин.",
+                    text = ratingText,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

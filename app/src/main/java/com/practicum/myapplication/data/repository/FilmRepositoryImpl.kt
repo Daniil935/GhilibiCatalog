@@ -1,10 +1,15 @@
-package com.practicum.myapplication.data
+package com.practicum.myapplication.data.repository
 
-class FilmRepository(
+import com.practicum.myapplication.data.GhibliApi
+import com.practicum.myapplication.data.RetrofitClient
+import com.practicum.myapplication.domain.model.Film
+import com.practicum.myapplication.domain.repository.FilmRepository
+
+class FilmRepositoryImpl(
     private val api: GhibliApi = RetrofitClient.api
-) {
+) : FilmRepository {
 
-    suspend fun getFilms(): List<Film> {
+    override suspend fun getFilms(): List<Film> {
         val response = api.getFilms()
 
         if (!response.isSuccessful) {
@@ -15,7 +20,7 @@ class FilmRepository(
             ?: throw Exception("Сервер вернул пустой ответ")
     }
 
-    suspend fun getFilmById(id: String): Film {
+    override suspend fun getFilmById(id: String): Film {
         val response = api.getFilmById(id)
 
         if (!response.isSuccessful) {
