@@ -1,5 +1,9 @@
 package com.practicum.myapplication.data
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
 object FilmRepository {
 
     val films = listOf(
@@ -53,7 +57,23 @@ object FilmRepository {
         )
     )
 
+    private val _favoriteIds = MutableStateFlow<Set<String>>(emptySet())
+    val favoriteIds: StateFlow<Set<String>> = _favoriteIds.asStateFlow()
+
     fun getFilmById(id: String): Film? {
         return films.find { it.id == id }
+    }
+
+    fun toggleFavorite(filmId: String) {
+        _favoriteIds.value =
+            if (filmId in _favoriteIds.value) {
+                _favoriteIds.value - filmId
+            } else {
+                _favoriteIds.value + filmId
+            }
+    }
+
+    fun getFavoriteFilms(): List<Film> {
+        return films.filter { it.id in _favoriteIds.value }
     }
 }

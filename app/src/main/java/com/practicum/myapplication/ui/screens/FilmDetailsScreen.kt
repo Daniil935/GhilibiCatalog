@@ -24,16 +24,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.practicum.myapplication.data.Film
-import com.practicum.myapplication.viewmodel.FilmViewModel
+import com.practicum.myapplication.viewmodel.FilmDetailsViewModel
 
 @Composable
 fun FilmDetailsScreen(
-    film: Film?,
+    filmId: String,
     onBackClick: () -> Unit,
-    viewModel: FilmViewModel = viewModel()
+    viewModel: FilmDetailsViewModel = viewModel()
 ) {
+    val film = viewModel.getFilmById(filmId)
     val favoriteIds by viewModel.favoriteIds.collectAsState()
+
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
@@ -69,6 +70,7 @@ fun FilmDetailsScreen(
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
+
                 OutlinedButton(
                     onClick = {
                         viewModel.toggleFavorite(film.id)
@@ -84,6 +86,7 @@ fun FilmDetailsScreen(
                 }
 
                 Spacer(modifier = Modifier.height(20.dp))
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -96,12 +99,15 @@ fun FilmDetailsScreen(
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
+
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Год выпуска: ${film.releaseDate}")
-                        Text("Продолжительность: ${film.runningTime} мин.")
-                        Text("Рейтинг: ${film.rating}%")
+
+                        Text(viewModel.getReleaseDateText(film))
+                        Text(viewModel.getRunningTimeText(film))
+                        Text(viewModel.getRatingText(film))
                     }
                 }
+
 
                 Spacer(modifier = Modifier.height(20.dp))
 
@@ -130,8 +136,6 @@ fun FilmDetailsScreen(
 
                 InfoRow("Режиссёр", film.director)
                 InfoRow("Продюсер", film.producer)
-
-
             }
         }
     }

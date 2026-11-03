@@ -20,8 +20,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -29,14 +27,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.practicum.myapplication.data.Film
-import com.practicum.myapplication.viewmodel.FilmViewModel
-
+import com.practicum.myapplication.viewmodel.FilmListViewModel
 @Composable
 fun FilmListScreen(
     onFilmClick: (String) -> Unit,
-    viewModel: FilmViewModel = viewModel()
+    viewModel: FilmListViewModel = viewModel()
 ) {
-    val films by viewModel.films.collectAsState()
+    val films = viewModel.films
 
     Scaffold(
         topBar = {

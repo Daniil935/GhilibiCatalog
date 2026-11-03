@@ -20,16 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.practicum.myapplication.viewmodel.FilmViewModel
+import com.practicum.myapplication.viewmodel.FavoritesViewModel
 
 @Composable
 fun FavoritesScreen(
     onFilmClick: (String) -> Unit,
-    viewModel: FilmViewModel = viewModel()
+    viewModel: FavoritesViewModel = viewModel()
 ) {
     val favoriteIds by viewModel.favoriteIds.collectAsState()
-    val films by viewModel.films.collectAsState()
-    val favorites = films.filter { it.id in favoriteIds }
+    val favorites = viewModel.getFavoriteFilms()
 
     Scaffold(
         topBar = {
@@ -77,7 +76,9 @@ fun FavoritesScreen(
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
-                            Text(text = "Год выпуска: ${film.releaseDate}")
+                            Text(
+                                text = "Год выпуска: ${film.releaseDate}"
+                            )
                         }
                     }
                 }
