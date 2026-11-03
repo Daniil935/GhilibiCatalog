@@ -11,6 +11,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -123,12 +126,31 @@ fun AppNavigation() {
 
             composable(Screen.FilmDetails.route) { backStackEntry ->
                 val filmId = backStackEntry.arguments?.getString("filmId")
-                val film = filmId?.let { filmViewModel.getFilmById(it) }
+
+                val filmState = remember(filmId) {
+                    mutableStateOf<com.practicum.myapplication.data.Film?>(null)
+                }
+
+                LaunchedEffect(filmId) {
+                    filmState.value = null
+
+                    if (filmId != null) {
+                        filmState.value = filmViewModel.getFilmById(filmId)
+                    }
+                }
 
                 FilmDetailsScreen(
-                    film = film,
+                    film = filmState.value,
                     onBackClick = {
                         navController.popBackStack()
+                    },
+                    onRetryClick = {
+                        filmState.value = null
+                        if (filmId != null) {
+                            filmViewModel.retryLoadFilm(filmId) { film ->
+                                filmState.value = film
+                            }
+                        }
                     },
                     viewModel = filmViewModel
                 )

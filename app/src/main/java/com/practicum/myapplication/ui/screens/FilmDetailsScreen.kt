@@ -13,6 +13,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -20,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -31,9 +33,12 @@ import com.practicum.myapplication.viewmodel.FilmViewModel
 fun FilmDetailsScreen(
     film: Film?,
     onBackClick: () -> Unit,
+    onRetryClick: () -> Unit,
     viewModel: FilmViewModel = viewModel()
 ) {
     val favoriteIds by viewModel.favoriteIds.collectAsState()
+    val isDetailLoading by viewModel.isDetailLoading.collectAsState()
+    val detailError by viewModel.detailError.collectAsState()
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
@@ -49,10 +54,46 @@ fun FilmDetailsScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             if (film == null) {
-                Text(
-                    text = "Фильм не найден",
-                    style = MaterialTheme.typography.headlineSmall
-                )
+                when {
+                    isDetailLoading -> {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator()
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text("Загружаем информацию о фильме...")
+                        }
+                    }
+
+                    detailError != null -> {
+                        Text(
+                            text = "Не удалось загрузить фильм",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Button(
+                            onClick = onRetryClick
+                        ) {
+                            Text("Повторить")
+                        }
+                        Text(
+                            text = detailError ?: "Неизвестная ошибка",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+
+                    else -> {
+                        Text(
+                            text = "Фильм не найден",
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                }
             } else {
                 Text(
                     text = film.title,
