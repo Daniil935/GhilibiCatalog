@@ -14,26 +14,37 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.practicum.myapplication.data.Film
+import com.practicum.myapplication.domain.model.Film
 import com.practicum.myapplication.viewmodel.FilmListViewModel
+
 @Composable
 fun FilmListScreen(
     onFilmClick: (String) -> Unit,
-    viewModel: FilmListViewModel = viewModel()
+    viewModelFactory: ViewModelProvider.Factory
 ) {
-    val films = viewModel.films
+    val viewModel: FilmListViewModel = viewModel(
+        factory = viewModelFactory
+    )
+    val films by viewModel.films.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Scaffold(
         topBar = {
@@ -55,26 +66,88 @@ fun FilmListScreen(
             }
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 8.dp,
-                bottom = 16.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(
-                items = films,
-                key = { it.id }
-            ) { film ->
-                FilmCard(
-                    film = film,
-                    onClick = { onFilmClick(film.id) }
-                )
+        when {
+            isLoading && films.isEmpty() -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(Modifier.height(16.dp))
+                    Text("Загружаем фильмы...")
+                }
+            }
+
+            error != null && films.isEmpty() -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Не удалось загрузить фильмы",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = error ?: "Проверьте подключение к интернету"
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Button(onClick = { viewModel.loadFilms() }) {
+                        Text("Повторить")
+                    }
+                }
+            }
+
+            films.isEmpty() && !isLoading -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text("Фильмы не найдены")
+                    Spacer(Modifier.height(16.dp))
+                    Button(onClick = { viewModel.loadFilms() }) {
+                        Text("Загрузить ещё раз")
+                    }
+                }
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 8.dp,
+                        bottom = 16.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        items = films,
+                        key = { it.id }
+                    ) { film ->
+                        FilmCard(
+                            film = film,
+                            directorText = viewModel.getDirectorText(film),
+                            ratingText = viewModel.getRatingAndRunningTimeText(film),
+                            onClick = { onFilmClick(film.id) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -83,6 +156,8 @@ fun FilmListScreen(
 @Composable
 private fun FilmCard(
     film: Film,
+    directorText: String,
+    ratingText: String,
     onClick: () -> Unit
 ) {
     Card(
@@ -113,8 +188,6 @@ private fun FilmCard(
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
-
-
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -145,7 +218,7 @@ private fun FilmCard(
                 Spacer(Modifier.height(4.dp))
 
                 Text(
-                    text = "Режиссёр: ${film.director}",
+                    text = directorText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -162,7 +235,7 @@ private fun FilmCard(
                 Spacer(Modifier.height(8.dp))
 
                 Text(
-                    text = "★ ${film.rating}%  •  ${film.runningTime} мин.",
+                    text = ratingText,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

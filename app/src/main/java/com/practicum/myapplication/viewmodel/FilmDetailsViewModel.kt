@@ -1,21 +1,53 @@
 package com.practicum.myapplication.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.practicum.myapplication.data.Film
-import com.practicum.myapplication.data.FilmRepository
+import androidx.lifecycle.viewModelScope
+import com.practicum.myapplication.data.FavoriteRepository
+import com.practicum.myapplication.domain.model.Film
+import com.practicum.myapplication.domain.usecase.GetFilmByIdUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
-class FilmDetailsViewModel : ViewModel() {
+class FilmDetailsViewModel(
+    private val getFilmByIdUseCase: GetFilmByIdUseCase
+) : ViewModel() {
+
+    private val _film = MutableStateFlow<Film?>(null)
+    val film: StateFlow<Film?> = _film.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     val favoriteIds: StateFlow<Set<String>> =
-    FilmRepository.favoriteIds
+    FavoriteRepository.favoriteIds
 
-    fun getFilmById(id: String): Film? {
-        return FilmRepository.getFilmById(id)
+    private val errorHandler = createErrorHandler(
+        onError = { message ->
+            _error.value = message
+            _isLoading.value = false
+        },
+        defaultMessage = "Не удалось загрузить информацию о фильме"
+    )
+
+    fun loadFilm(id: String) {
+        viewModelScope.launch(errorHandler) {
+            _isLoading.value = true
+            _error.value = null
+
+            val result = getFilmByIdUseCase(id)
+
+            _film.value = result
+            _isLoading.value = false
+        }
     }
 
     fun toggleFavorite(filmId: String) {
-        FilmRepository.toggleFavorite(filmId)
+        FavoriteRepository.toggleFavorite(filmId)
     }
 
     fun getReleaseDateText(film: Film): String {
