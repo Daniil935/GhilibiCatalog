@@ -31,6 +31,7 @@ fun FavoritesScreen(
     viewModel: FavoritesViewModel = viewModel()
 ) {
     val favoriteIds by viewModel.favoriteIds.collectAsState()
+
     val films by viewModel.films.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -127,7 +128,9 @@ fun FavoritesScreen(
                                 fontWeight = FontWeight.Bold
                             )
 
+
                             Text(text = viewModel.getReleaseDateText(film))
+
                         }
                     }
                 }
