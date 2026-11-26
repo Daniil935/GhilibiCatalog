@@ -141,7 +141,7 @@ private fun FilmDetailsContent(
         Spacer(Modifier.height(16.dp))
 
         Button(
-            onClick = { viewModel.toggleFavorite(film.id) },
+            onClick = { viewModel.toggleFavorite(film) },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(

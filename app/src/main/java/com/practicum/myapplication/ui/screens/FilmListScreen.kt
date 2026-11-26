@@ -1,7 +1,9 @@
 package com.practicum.myapplication.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -26,6 +29,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -37,6 +41,7 @@ import com.practicum.myapplication.viewmodel.FilmListViewModel
 @Composable
 fun FilmListScreen(
     onFilmClick: (String) -> Unit,
+    onFilterClick: () -> Unit,
     viewModelFactory: ViewModelProvider.Factory
 ) {
     val viewModel: FilmListViewModel = viewModel(
@@ -45,6 +50,7 @@ fun FilmListScreen(
     val films by viewModel.films.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val isFilterActive by viewModel.isFilterActive.collectAsState()
 
     Scaffold(
         topBar = {
@@ -53,11 +59,40 @@ fun FilmListScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
-                Text(
-                    text = "Мир Studio Ghibli",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Мир Studio Ghibli",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Button(
+                        onClick = onFilterClick
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("Фильтры")
+
+                            if (isFilterActive) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(10.dp)
+                                        .background(
+                                            color = Color(0xAEBEF2FF),
+                                            shape = CircleShape
+                                        )
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Text(
                     text = "Коллекция волшебных историй",
                     style = MaterialTheme.typography.bodyMedium,
@@ -96,9 +131,7 @@ fun FilmListScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = error ?: "Проверьте подключение к интернету"
-                    )
+                    Text(error ?: "Проверьте подключение к интернету")
                     Spacer(Modifier.height(16.dp))
                     Button(onClick = { viewModel.loadFilms() }) {
                         Text("Повторить")
@@ -168,19 +201,14 @@ private fun FilmCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainer
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Card(
-                modifier = Modifier.size(
-                    width = 76.dp,
-                    height = 112.dp
-                ),
+                modifier = Modifier.size(width = 76.dp, height = 112.dp),
                 shape = RoundedCornerShape(10.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -207,6 +235,8 @@ private fun FilmCard(
             Column(
                 modifier = Modifier
                     .weight(1f)
+
+
                     .padding(start = 16.dp)
             ) {
                 Text(
@@ -214,26 +244,20 @@ private fun FilmCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-
                 Spacer(Modifier.height(4.dp))
-
                 Text(
                     text = directorText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
                 Spacer(Modifier.height(8.dp))
-
                 Text(
                     text = film.description,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
-
                 Spacer(Modifier.height(8.dp))
-
                 Text(
                     text = ratingText,
                     style = MaterialTheme.typography.labelMedium,

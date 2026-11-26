@@ -2,16 +2,20 @@ package com.practicum.myapplication.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.myapplication.data.FavoriteRepository
 import com.practicum.myapplication.domain.model.Film
+import com.practicum.myapplication.domain.repository.FavoriteFilmRepository
 import com.practicum.myapplication.domain.usecase.GetFilmByIdUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class FilmDetailsViewModel(
-    private val getFilmByIdUseCase: GetFilmByIdUseCase
+    private val getFilmByIdUseCase: GetFilmByIdUseCase,
+    private val favoriteFilmRepository: FavoriteFilmRepository
 ) : ViewModel() {
 
     private val _film = MutableStateFlow<Film?>(null)
@@ -24,7 +28,12 @@ class FilmDetailsViewModel(
     val error: StateFlow<String?> = _error.asStateFlow()
 
     val favoriteIds: StateFlow<Set<String>> =
-    FavoriteRepository.favoriteIds
+    favoriteFilmRepository.observeFavoriteIds()
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            emptySet()
+        )
 
     private val errorHandler = createErrorHandler(
         onError = { message ->
@@ -46,8 +55,14 @@ class FilmDetailsViewModel(
         }
     }
 
-    fun toggleFavorite(filmId: String) {
-        FavoriteRepository.toggleFavorite(filmId)
+    fun toggleFavorite(film: Film) {
+        viewModelScope.launch {
+            if(favoriteFilmRepository.isFavorite(film.id)) {
+                favoriteFilmRepository.removeFavorite(film.id)
+            } else {
+                favoriteFilmRepository.addFavorite(film)
+            }
+        }
     }
 
     fun getReleaseDateText(film: Film): String {

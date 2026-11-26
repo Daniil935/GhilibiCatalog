@@ -23,6 +23,7 @@ import com.practicum.myapplication.ui.screens.AboutScreen
 import com.practicum.myapplication.ui.screens.FavoritesScreen
 import com.practicum.myapplication.ui.screens.FilmDetailsScreen
 import com.practicum.myapplication.ui.screens.FilmListScreen
+import com.practicum.myapplication.ui.screens.FilterSettingsScreen
 
 @Composable
 fun AppNavigation(
@@ -67,17 +68,14 @@ fun AppNavigation(
                                     Icons.Default.Home,
                                     contentDescription = "Фильмы"
                                 )
-
                                 Screen.Favorites -> Icon(
                                     Icons.Default.Favorite,
                                     contentDescription = "Избранное"
                                 )
-
                                 Screen.About -> Icon(
                                     Icons.Default.Info,
                                     contentDescription = "О приложении"
                                 )
-
                                 else -> Unit
                             }
                         },
@@ -99,10 +97,11 @@ fun AppNavigation(
 
         NavHost(
             navController = navController,
+
+
             startDestination = Screen.Films.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-
             composable(Screen.Films.route) {
                 FilmListScreen(
                     viewModelFactory = viewModelFactory,
@@ -110,6 +109,9 @@ fun AppNavigation(
                         navController.navigate(
                             Screen.FilmDetails.createRoute(filmId)
                         )
+                    },
+                    onFilterClick = {
+                        navController.navigate("filter_settings")
                     }
                 )
             }
@@ -127,6 +129,18 @@ fun AppNavigation(
 
             composable(Screen.About.route) {
                 AboutScreen()
+            }
+
+            composable("filter_settings") {
+                FilterSettingsScreen(
+                    viewModelFactory = viewModelFactory,
+                    onDone = {
+                        navController.popBackStack()
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
             }
 
             composable(Screen.FilmDetails.route) { backStackEntry ->
