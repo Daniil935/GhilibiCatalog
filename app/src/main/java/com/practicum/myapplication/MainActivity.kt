@@ -10,7 +10,7 @@ import com.practicum.myapplication.ui.theme.MyApplicationTheme
 class MainActivity : ComponentActivity() {
 
     private val appContainer by lazy {
-        AppContainer()
+        AppContainer(applicationContext)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,9 +18,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyApplicationTheme {
-                AppNavigation(
-                    appContainer = appContainer
-                )
+                AppNavigation(appContainer = appContainer)
             }
         }
     }

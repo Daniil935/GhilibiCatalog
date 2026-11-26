@@ -2,56 +2,46 @@ package com.practicum.myapplication.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.myapplication.data.FavoriteRepository
 import com.practicum.myapplication.domain.model.Film
-import com.practicum.myapplication.domain.usecase.GetFilmsUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.practicum.myapplication.domain.repository.FavoriteFilmRepository
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.toSet
 
 class FavoritesViewModel(
-    private val getFilmsUseCase: GetFilmsUseCase
+    private val favoriteFilmRepository: FavoriteFilmRepository
 ) : ViewModel() {
 
-    val favoriteIds: StateFlow<Set<String>> =
-    FavoriteRepository.favoriteIds
-
-    private val _films = MutableStateFlow<List<Film>>(emptyList())
-    val films: StateFlow<List<Film>> = _films.asStateFlow()
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
-
-    private val errorHandler = createErrorHandler(
-        onError = { message ->
-            _error.value = message
-            _isLoading.value = false
-        },
-        defaultMessage = "Не удалось загрузить фильмы"
+    // Список избранных фильмов из Room
+    val films: StateFlow<List<Film>> =
+    favoriteFilmRepository.observeFavoriteFilms()
+    .stateIn(
+    viewModelScope,
+    SharingStarted.WhileSubscribed(5000),
+    emptyList()
     )
 
-    init {
-        loadFilms()
-    }
+    // ID избранных фильмов
+    val favoriteIds: StateFlow<Set<String>> =
+    films.map { favoriteFilms ->
+        favoriteFilms.map { it.id }.toSet()
+    }.stateIn(
+    viewModelScope,
+    SharingStarted.WhileSubscribed(5000),
+    emptySet()
+    )
 
-    fun loadFilms() {
-        viewModelScope.launch(errorHandler) {
-            _isLoading.value = true
-            _error.value = null
+    // Состояния для экрана
+    val isLoading: StateFlow<Boolean> =
+        kotlinx.coroutines.flow.MutableStateFlow(false)
 
-            val result = getFilmsUseCase()
-
-            _films.value = result
-            _isLoading.value = false
-        }
-    }
+    val error: StateFlow<String?> =
+        kotlinx.coroutines.flow.MutableStateFlow(null)
 
     fun getFavoriteFilms(): List<Film> {
-        return _films.value.filter { it.id in favoriteIds.value }
+        return films.value
     }
 
     fun getReleaseDateText(film: Film): String {

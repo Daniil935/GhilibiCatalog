@@ -85,13 +85,6 @@ fun FavoritesScreen(
                     text = error ?: "Неизвестная ошибка",
                     modifier = Modifier.padding(top = 8.dp)
                 )
-
-                Button(
-                    onClick = { viewModel.loadFilms() },
-                    modifier = Modifier.padding(top = 12.dp)
-                ) {
-                    Text("Повторить")
-                }
             }
         } else if (favorites.isEmpty()) {
             Column(
