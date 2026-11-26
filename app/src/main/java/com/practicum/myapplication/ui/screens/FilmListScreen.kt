@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.practicum.myapplication.domain.model.Film
 import com.practicum.myapplication.viewmodel.FilmListViewModel
@@ -36,8 +37,11 @@ import com.practicum.myapplication.viewmodel.FilmListViewModel
 @Composable
 fun FilmListScreen(
     onFilmClick: (String) -> Unit,
-    viewModel: FilmListViewModel = viewModel()
+    viewModelFactory: ViewModelProvider.Factory
 ) {
+    val viewModel: FilmListViewModel = viewModel(
+        factory = viewModelFactory
+    )
     val films by viewModel.films.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()

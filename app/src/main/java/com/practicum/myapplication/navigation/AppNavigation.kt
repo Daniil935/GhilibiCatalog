@@ -18,14 +18,18 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.practicum.myapplication.di.AppContainer
 import com.practicum.myapplication.ui.screens.AboutScreen
 import com.practicum.myapplication.ui.screens.FavoritesScreen
 import com.practicum.myapplication.ui.screens.FilmDetailsScreen
 import com.practicum.myapplication.ui.screens.FilmListScreen
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    appContainer: AppContainer
+) {
     val navController = rememberNavController()
+    val viewModelFactory = appContainer.viewModelFactory
 
     val items = listOf(
         Screen.Films,
@@ -101,8 +105,7 @@ fun AppNavigation() {
 
             composable(Screen.Films.route) {
                 FilmListScreen(
-
-
+                    viewModelFactory = viewModelFactory,
                     onFilmClick = { filmId ->
                         navController.navigate(
                             Screen.FilmDetails.createRoute(filmId)
@@ -113,6 +116,7 @@ fun AppNavigation() {
 
             composable(Screen.Favorites.route) {
                 FavoritesScreen(
+                    viewModelFactory = viewModelFactory,
                     onFilmClick = { filmId ->
                         navController.navigate(
                             Screen.FilmDetails.createRoute(filmId)
@@ -131,6 +135,7 @@ fun AppNavigation() {
                 if (filmId != null) {
                     FilmDetailsScreen(
                         filmId = filmId,
+                        viewModelFactory = viewModelFactory,
                         onBackClick = {
                             navController.popBackStack()
                         }

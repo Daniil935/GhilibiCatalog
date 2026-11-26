@@ -3,21 +3,16 @@ package com.practicum.myapplication.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.practicum.myapplication.data.FavoriteRepository
-import com.practicum.myapplication.data.repository.FilmRepositoryImpl
 import com.practicum.myapplication.domain.model.Film
 import com.practicum.myapplication.domain.usecase.GetFilmByIdUseCase
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class FilmDetailsViewModel : ViewModel() {
-
-    private val repository = FilmRepositoryImpl()
-    private val getFilmByIdUseCase = GetFilmByIdUseCase(repository)
+class FilmDetailsViewModel(
+    private val getFilmByIdUseCase: GetFilmByIdUseCase
+) : ViewModel() {
 
     private val _film = MutableStateFlow<Film?>(null)
     val film: StateFlow<Film?> = _film.asStateFlow()
@@ -31,26 +26,23 @@ class FilmDetailsViewModel : ViewModel() {
     val favoriteIds: StateFlow<Set<String>> =
     FavoriteRepository.favoriteIds
 
+    private val errorHandler = createErrorHandler(
+        onError = { message ->
+            _error.value = message
+            _isLoading.value = false
+        },
+        defaultMessage = "Не удалось загрузить информацию о фильме"
+    )
+
     fun loadFilm(id: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(errorHandler) {
             _isLoading.value = true
             _error.value = null
 
-            try {
-                val result = withContext(Dispatchers.IO) {
-                    getFilmByIdUseCase(id)
-                }
+            val result = getFilmByIdUseCase(id)
 
-                _film.value = result
-
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _error.value =
-                    e.message ?: "Не удалось загрузить информацию о фильме"
-            } finally {
-                _isLoading.value = false
-            }
+            _film.value = result
+            _isLoading.value = false
         }
     }
 

@@ -22,14 +22,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.practicum.myapplication.viewmodel.FavoritesViewModel
+
 
 @Composable
 fun FavoritesScreen(
     onFilmClick: (String) -> Unit,
-    viewModel: FavoritesViewModel = viewModel()
+    viewModelFactory: ViewModelProvider.Factory
 ) {
+    val viewModel: FavoritesViewModel = viewModel(
+        factory = viewModelFactory
+    )
     val favoriteIds by viewModel.favoriteIds.collectAsState()
 
     val films by viewModel.films.collectAsState()

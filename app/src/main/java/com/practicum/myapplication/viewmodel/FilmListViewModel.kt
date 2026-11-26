@@ -2,21 +2,16 @@ package com.practicum.myapplication.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.practicum.myapplication.data.repository.FilmRepositoryImpl
 import com.practicum.myapplication.domain.model.Film
 import com.practicum.myapplication.domain.usecase.GetFilmsUseCase
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class FilmListViewModel : ViewModel() {
-
-    private val repository = FilmRepositoryImpl()
-    private val getFilmsUseCase = GetFilmsUseCase(repository)
+class FilmListViewModel(
+    private val getFilmsUseCase: GetFilmsUseCase
+) : ViewModel() {
 
     private val _films = MutableStateFlow<List<Film>>(emptyList())
     val films: StateFlow<List<Film>> = _films.asStateFlow()
@@ -27,30 +22,27 @@ class FilmListViewModel : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    private val errorHandler = createErrorHandler(
+        onError = { message ->
+            _error.value = message
+            _isLoading.value = false
+        },
+        defaultMessage = "Не удалось загрузить фильмы"
+    )
+
     init {
         loadFilms()
     }
 
     fun loadFilms() {
-        viewModelScope.launch {
+        viewModelScope.launch(errorHandler) {
             _isLoading.value = true
             _error.value = null
 
-            try {
-                val result = withContext(Dispatchers.IO) {
-                    getFilmsUseCase()
-                }
+            val result = getFilmsUseCase()
 
-                _films.value = result
-
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _error.value =
-                    e.message ?: "Не удалось загрузить фильмы"
-            } finally {
-                _isLoading.value = false
-            }
+            _films.value = result
+            _isLoading.value = false
         }
     }
 

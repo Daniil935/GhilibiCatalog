@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.practicum.myapplication.domain.model.Film
 import com.practicum.myapplication.viewmodel.FilmDetailsViewModel
@@ -31,8 +32,11 @@ import com.practicum.myapplication.viewmodel.FilmDetailsViewModel
 fun FilmDetailsScreen(
     filmId: String,
     onBackClick: () -> Unit,
-    viewModel: FilmDetailsViewModel = viewModel()
+    viewModelFactory: ViewModelProvider.Factory
 ) {
+    val viewModel: FilmDetailsViewModel = viewModel(
+        factory = viewModelFactory
+    )
     val film by viewModel.film.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()

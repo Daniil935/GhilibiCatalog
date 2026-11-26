@@ -17,6 +17,7 @@ class FilmRepositoryImpl(
         }
 
         return response.body()
+            ?.map { it.toDomain() }
             ?: throw Exception("Сервер вернул пустой ответ")
     }
 
@@ -28,6 +29,7 @@ class FilmRepositoryImpl(
         }
 
         return response.body()
+            ?.toDomain()
             ?: throw Exception("Фильм не найден")
     }
 }
