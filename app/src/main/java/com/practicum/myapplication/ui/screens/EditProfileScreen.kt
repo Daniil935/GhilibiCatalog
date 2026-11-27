@@ -1,8 +1,12 @@
 package com.practicum.myapplication.ui.screens
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,11 +20,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,13 +40,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.practicum.myapplication.domain.model.UserProfile
+import com.practicum.myapplication.notification.ClassAlarmScheduler
 import com.practicum.myapplication.viewmodel.ProfileViewModel
 import java.io.File
+import java.util.Calendar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     viewModelFactory: ViewModelProvider.Factory,
@@ -55,8 +64,68 @@ fun EditProfileScreen(
     var portfolioUrl by rememberSaveable { mutableStateOf("") }
     var favoriteFilm by rememberSaveable { mutableStateOf("") }
     var favoriteDirector by rememberSaveable { mutableStateOf("") }
+    var favoriteClassTime by rememberSaveable { mutableStateOf("") }
     var showPhotoDialog by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
     var cameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var validationError by remember { mutableStateOf<String?>(null) }
+
+    val timeIsValid = Regex("^([01][0-9]|2[0-3]):[0-5][0-9]$")
+        .matches(favoriteClassTime)
+
+    fun saveAndFinish() {
+        if (!timeIsValid) {
+            validationError = "Укажи время в формате ЧЧ:ММ"
+            return
+        }
+
+        val parts = favoriteClassTime.split(":")
+        val selected = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, parts[0].toInt())
+            set(Calendar.MINUTE, parts[1].toInt())
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        if (selected.timeInMillis <= System.currentTimeMillis()) {
+            validationError = "Выбери время позже текущего. Напоминание устанавливается на сегодня."
+            return
+        }
+
+        val savedProfile = UserProfile(
+            fullName = fullName.trim(),
+            avatarUri = avatarUri,
+            portfolioUrl = portfolioUrl.trim(),
+            favoriteFilm = favoriteFilm.trim(),
+            favoriteDirector = favoriteDirector.trim(),
+            favoriteClassTime = favoriteClassTime
+        )
+
+        ClassAlarmScheduler.cancel(context)
+        val scheduled = ClassAlarmScheduler.schedule(
+            context,
+            favoriteClassTime,
+            fullName.trim()
+        )
+
+        if (!scheduled) {
+            validationError = "Не удалось установить напоминание. Проверь выбранное время."
+            return
+        }
+
+        viewModel.saveProfile(savedProfile)
+        onDone()
+    }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            saveAndFinish()
+        } else {
+            validationError = "Разреши уведомления в настройках Android, чтобы получать напоминание."
+        }
+    }
 
     LaunchedEffect(profile) {
         fullName = profile.fullName
@@ -64,6 +133,7 @@ fun EditProfileScreen(
         portfolioUrl = profile.portfolioUrl
         favoriteFilm = profile.favoriteFilm
         favoriteDirector = profile.favoriteDirector
+        favoriteClassTime = profile.favoriteClassTime
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -83,9 +153,7 @@ fun EditProfileScreen(
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
-            avatarUri = cameraUri?.toString().orEmpty()
-        }
+        if (success) avatarUri = cameraUri?.toString().orEmpty()
     }
 
     if (showPhotoDialog) {
@@ -94,39 +162,59 @@ fun EditProfileScreen(
             title = { Text("Изменить фотографию") },
             text = { Text("Выбери источник фотографии") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        showPhotoDialog = false
-                        galleryLauncher.launch(arrayOf("image/*"))
-                    }
-                ) {
-                    Text("Галерея")
-                }
+                TextButton(onClick = {
+                    showPhotoDialog = false
+                    galleryLauncher.launch(arrayOf("image/*"))
+                }) { Text("Галерея") }
             },
             dismissButton = {
                 Column {
-                    TextButton(
-                        onClick = {
-                            showPhotoDialog = false
-                            val photoFile = File.createTempFile(
-                                "profile_photo_",
-                                ".jpg",
-                                context.cacheDir
-                            )
-                            val uri = FileProvider.getUriForFile(
-                                context,
-                                "${context.packageName}.fileprovider",
-                                photoFile
-                            )
-                            cameraUri = uri
-                            cameraLauncher.launch(uri)
-                        }
-                    ) {
-                        Text("Камера")
-                    }
+                    TextButton(onClick = {
+                        showPhotoDialog = false
+                        val photoFile = File.createTempFile(
+                            "profile_photo_", ".jpg", context.cacheDir
+                        )
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            photoFile
+                        )
+                        cameraUri = uri
+                        cameraLauncher.launch(uri)
+                    }) { Text("Камера") }
                     TextButton(onClick = { showPhotoDialog = false }) {
                         Text("Отмена")
                     }
+                }
+            }
+        )
+    }
+
+    if (showTimePicker) {
+        val initialParts = favoriteClassTime.split(":")
+        val initialHour = initialParts.getOrNull(0)?.toIntOrNull() ?: 9
+        val initialMinute = initialParts.getOrNull(1)?.toIntOrNull() ?: 0
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialHour.coerceIn(0, 23),
+            initialMinute = initialMinute.coerceIn(0, 59),
+            is24Hour = true
+        )
+
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text("Время любимой пары") },
+            text = { TimePicker(state = timePickerState) },
+            confirmButton = {
+                TextButton(onClick = {
+                    favoriteClassTime =
+                        "%02d:%02d".format(timePickerState.hour, timePickerState.minute)
+                    validationError = null
+                    showTimePicker = false
+                }) { Text("Выбрать") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Отмена")
                 }
             }
         )
@@ -194,21 +282,64 @@ fun EditProfileScreen(
                 singleLine = true
             )
 
+            OutlinedTextField(
+                value = favoriteClassTime,
+                onValueChange = {
+                    favoriteClassTime = it
+                    validationError = null
+                },
+                label = { Text("Время любимой пары (ЧЧ:ММ)") },
+                placeholder = { Text("Например, 14:30") },
+                trailingIcon = {
+                    TextButton(onClick = { showTimePicker = true }) {
+                        Text("🕒")
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                isError = favoriteClassTime.isNotEmpty() && !timeIsValid
+            )
+
+            if (favoriteClassTime.isEmpty() || !timeIsValid) {
+                Text(
+                    text = "Введи время в формате ЧЧ:ММ или выбери его по часам.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp)
+                )
+            }
+
+            validationError?.let {
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.padding(8.dp))
 
             Button(
                 onClick = {
-                    viewModel.saveProfile(
-                        UserProfile(
-                            fullName = fullName.trim(),
-                            avatarUri = avatarUri,
-                            portfolioUrl = portfolioUrl.trim(),
-                            favoriteFilm = favoriteFilm.trim(),
-                            favoriteDirector = favoriteDirector.trim()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        notificationPermissionLauncher.launch(
+                            Manifest.permission.POST_NOTIFICATIONS
                         )
-                    )
-                    onDone()
+                    } else {
+                        saveAndFinish()
+                    }
                 },
+                enabled = timeIsValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Готово")

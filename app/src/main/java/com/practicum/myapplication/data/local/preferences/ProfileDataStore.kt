@@ -8,9 +8,7 @@ import com.practicum.myapplication.domain.model.UserProfile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-private val Context.profileDataStore by preferencesDataStore(
-    name = "user_profile"
-)
+private val Context.profileDataStore by preferencesDataStore(name = "user_profile")
 
 class ProfileDataStore(
     private val context: Context
@@ -21,6 +19,7 @@ class ProfileDataStore(
         val PORTFOLIO_URL_KEY = stringPreferencesKey("portfolio_url")
         val FAVORITE_FILM_KEY = stringPreferencesKey("favorite_film")
         val FAVORITE_DIRECTOR_KEY = stringPreferencesKey("favorite_director")
+        val FAVORITE_CLASS_TIME_KEY = stringPreferencesKey("favorite_class_time")
     }
 
     val profile: Flow<UserProfile> =
@@ -30,7 +29,8 @@ class ProfileDataStore(
                 avatarUri = preferences[AVATAR_URI_KEY] ?: "",
                 portfolioUrl = preferences[PORTFOLIO_URL_KEY] ?: "",
                 favoriteFilm = preferences[FAVORITE_FILM_KEY] ?: "",
-                favoriteDirector = preferences[FAVORITE_DIRECTOR_KEY] ?: ""
+                favoriteDirector = preferences[FAVORITE_DIRECTOR_KEY] ?: "",
+                favoriteClassTime = preferences[FAVORITE_CLASS_TIME_KEY] ?: ""
             )
         }
 
@@ -41,6 +41,7 @@ class ProfileDataStore(
             preferences[PORTFOLIO_URL_KEY] = profile.portfolioUrl
             preferences[FAVORITE_FILM_KEY] = profile.favoriteFilm
             preferences[FAVORITE_DIRECTOR_KEY] = profile.favoriteDirector
+            preferences[FAVORITE_CLASS_TIME_KEY] = profile.favoriteClassTime
         }
     }
 }
