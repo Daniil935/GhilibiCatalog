@@ -6,6 +6,7 @@ import com.practicum.myapplication.viewmodel.FavoritesViewModel
 import com.practicum.myapplication.viewmodel.FilmDetailsViewModel
 import com.practicum.myapplication.viewmodel.FilmListViewModel
 import com.practicum.myapplication.viewmodel.FilterSettingsViewModel
+import com.practicum.myapplication.viewmodel.ProfileViewModel
 
 class AppViewModelFactory(
     private val appContainer: AppContainer
@@ -35,6 +36,9 @@ class AppViewModelFactory(
                     appContainer.getFilmByIdUseCase,
                     appContainer.favoriteFilmRepository
                 )
+
+            modelClass.isAssignableFrom(ProfileViewModel::class.java) ->
+                ProfileViewModel(appContainer.profileRepository)
 
             else -> throw IllegalArgumentException(
                 "Неизвестная ViewModel: ${modelClass.name}"

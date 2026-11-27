@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -20,10 +21,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.practicum.myapplication.di.AppContainer
 import com.practicum.myapplication.ui.screens.AboutScreen
+import com.practicum.myapplication.ui.screens.EditProfileScreen
 import com.practicum.myapplication.ui.screens.FavoritesScreen
 import com.practicum.myapplication.ui.screens.FilmDetailsScreen
 import com.practicum.myapplication.ui.screens.FilmListScreen
 import com.practicum.myapplication.ui.screens.FilterSettingsScreen
+import com.practicum.myapplication.ui.screens.ProfileScreen
 
 @Composable
 fun AppNavigation(
@@ -35,61 +38,73 @@ fun AppNavigation(
     val items = listOf(
         Screen.Films,
         Screen.Favorites,
-        Screen.About
+        Screen.About,
+        Screen.Profile
     )
 
     val navBackStackEntry = navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry.value?.destination
 
+    val showBottomBar = currentDestination?.route?.let { route ->
+        items.any { it.route == route }
+    } == true
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                items.forEach { screen ->
-                    val selected = currentDestination
-                        ?.hierarchy
-                        ?.any { it.route == screen.route } == true
+            if (showBottomBar) {
+                NavigationBar {
+                    items.forEach { screen ->
+                        val selected = currentDestination
+                            ?.hierarchy
+                            ?.any { it.route == screen.route } == true
 
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(screen.route) {
-                                popUpTo(
-                                    navController.graph.findStartDestination().id
-                                ) {
-                                    saveState = true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(
+                                        navController.graph.findStartDestination().id
+                                    ) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = {
-                            when (screen) {
-                                Screen.Films -> Icon(
-                                    Icons.Default.Home,
-                                    contentDescription = "Фильмы"
-                                )
-                                Screen.Favorites -> Icon(
-                                    Icons.Default.Favorite,
-                                    contentDescription = "Избранное"
-                                )
-                                Screen.About -> Icon(
-                                    Icons.Default.Info,
-                                    contentDescription = "О приложении"
-                                )
-                                else -> Unit
-                            }
-                        },
-                        label = {
-                            Text(
+                            },
+                            icon = {
                                 when (screen) {
-                                    Screen.Films -> "Фильмы"
-                                    Screen.Favorites -> "Избранное"
-                                    Screen.About -> "О приложении"
-                                    else -> ""
+                                    Screen.Films -> Icon(
+                                        Icons.Default.Home,
+                                        contentDescription = "Фильмы"
+                                    )
+                                    Screen.Favorites -> Icon(
+                                        Icons.Default.Favorite,
+                                        contentDescription = "Избранное"
+                                    )
+                                    Screen.About -> Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = "О приложении"
+                                    )
+                                    Screen.Profile -> Icon(
+                                        Icons.Default.Person,
+                                        contentDescription = "Профиль"
+                                    )
+                                    else -> Unit
                                 }
-                            )
-                        }
-                    )
+                            },
+                            label = {
+                                Text(
+                                    when (screen) {
+                                        Screen.Films -> "Фильмы"
+                                        Screen.Favorites -> "Избранное"
+                                        Screen.About -> "О приложении"
+                                        Screen.Profile -> "Профиль"
+                                        else -> ""
+                                    }
+                                )
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -97,8 +112,6 @@ fun AppNavigation(
 
         NavHost(
             navController = navController,
-
-
             startDestination = Screen.Films.route,
             modifier = Modifier.padding(innerPadding)
         ) {
@@ -129,6 +142,27 @@ fun AppNavigation(
 
             composable(Screen.About.route) {
                 AboutScreen()
+            }
+
+            composable(Screen.Profile.route) {
+                ProfileScreen(
+                    viewModelFactory = viewModelFactory,
+                    onEditClick = {
+                        navController.navigate(Screen.EditProfile.route)
+                    }
+                )
+            }
+
+            composable(Screen.EditProfile.route) {
+                EditProfileScreen(
+                    viewModelFactory = viewModelFactory,
+                    onDone = {
+                        navController.popBackStack(Screen.Profile.route, false)
+                    },
+                    onBackClick = {
+                        navController.popBackStack()
+                    }
+                )
             }
 
             composable("filter_settings") {
