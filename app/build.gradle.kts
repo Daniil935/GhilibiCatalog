@@ -70,4 +70,5 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     // DataStore
     implementation(libs.androidx.datastore.preferences)
+    implementation("androidx.exifinterface:exifinterface:1.4.1")
 }
