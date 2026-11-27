@@ -3,6 +3,7 @@ package com.practicum.myapplication.ui.screens
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,17 +44,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.practicum.myapplication.domain.model.UserProfile
-import com.practicum.myapplication.notification.ClassAlarmScheduler
 import com.practicum.myapplication.viewmodel.ProfileViewModel
 import java.io.File
 import java.util.Calendar
+import kotlin.text.format
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
     viewModelFactory: ViewModelProvider.Factory,
     onDone: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onScheduleReminder: (String, String) -> Boolean,
+    onCancelReminder: () -> Unit
 ) {
     val viewModel: ProfileViewModel = viewModel(factory = viewModelFactory)
     val profile by viewModel.profile.collectAsState()
@@ -67,7 +70,7 @@ fun EditProfileScreen(
     var favoriteClassTime by rememberSaveable { mutableStateOf("") }
     var showPhotoDialog by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
-    var cameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
     var validationError by remember { mutableStateOf<String?>(null) }
 
     val timeIsValid = Regex("^([01][0-9]|2[0-3]):[0-5][0-9]$")
@@ -101,9 +104,8 @@ fun EditProfileScreen(
             favoriteClassTime = favoriteClassTime
         )
 
-        ClassAlarmScheduler.cancel(context)
-        val scheduled = ClassAlarmScheduler.schedule(
-            context,
+        onCancelReminder()
+        val scheduled = onScheduleReminder(
             favoriteClassTime,
             fullName.trim()
         )

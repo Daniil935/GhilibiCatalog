@@ -27,12 +27,14 @@ import com.practicum.myapplication.ui.screens.FilmDetailsScreen
 import com.practicum.myapplication.ui.screens.FilmListScreen
 import com.practicum.myapplication.ui.screens.FilterSettingsScreen
 import com.practicum.myapplication.ui.screens.ProfileScreen
-
+import androidx.compose.ui.platform.LocalContext
+import com.practicum.myapplication.notification.ClassAlarmScheduler
 @Composable
 fun AppNavigation(
     appContainer: AppContainer
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
     val viewModelFactory = appContainer.viewModelFactory
 
     val items = listOf(
@@ -161,6 +163,12 @@ fun AppNavigation(
                     },
                     onBackClick = {
                         navController.popBackStack()
+                    },
+                    onScheduleReminder = { time, fullName ->
+                        ClassAlarmScheduler.schedule(context, time, fullName)
+                    },
+                    onCancelReminder = {
+                        ClassAlarmScheduler.cancel(context)
                     }
                 )
             }
