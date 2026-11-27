@@ -71,4 +71,5 @@ dependencies {
     // DataStore
     implementation(libs.androidx.datastore.preferences)
     implementation("androidx.exifinterface:exifinterface:1.4.1")
+    implementation(project(":profile"))
 }
