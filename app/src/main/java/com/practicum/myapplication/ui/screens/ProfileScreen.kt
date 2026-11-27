@@ -108,6 +108,19 @@ fun ProfileScreen(
                         text = profile.favoriteDirector.ifBlank { "Не указан" },
                         style = MaterialTheme.typography.bodyLarge
                     )
+
+                    Spacer(modifier = Modifier.size(12.dp))
+
+                    Text(
+                        text = "Время любимой пары",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = profile.favoriteClassTime.ifBlank { "Не указано" },
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+
                 }
             }
 

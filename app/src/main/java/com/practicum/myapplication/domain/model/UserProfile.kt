@@ -5,5 +5,6 @@ data class UserProfile(
     val avatarUri: String = "",
     val portfolioUrl: String = "",
     val favoriteFilm: String = "",
-    val favoriteDirector: String = ""
+    val favoriteDirector: String = "",
+    val favoriteClassTime: String = ""
 )
